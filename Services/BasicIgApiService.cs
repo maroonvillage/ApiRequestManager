@@ -8,7 +8,7 @@ using System.Text;
 using ApiRequestManager.Enums;
 using ApiRequestManager.Interfaces;
 using ApiRequestManager.Models;
-
+using apirequestmanager.Enums;
 
 namespace ApiRequestManager.Services
 {
@@ -21,11 +21,15 @@ namespace ApiRequestManager.Services
         private readonly IConfiguration _configuration;
         public HttpClient Client { get; }
 
+        private readonly IRequestRepository _requestRepository;
+
+
+
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly HttpClient _client;
 
 
-        public BasicIgApiService(HttpClient httpClient, IConfiguration configuration)
+        public BasicIgApiService(HttpClient httpClient, IConfiguration configuration, IRequestRepository requestRepository)
         {
             _configuration = configuration;
             _appId = _configuration.GetValue<string>("AppId__InstagramBasicApi");
@@ -37,7 +41,10 @@ namespace ApiRequestManager.Services
 
             Client = httpClient;
             Client.BaseAddress = new Uri(_baseUriIgBasicApiAuthorize);
+
+            _requestRepository = requestRepository;
         }
+
 
         public async Task RequestAuthorization(string redirectUri)
         {
@@ -144,7 +151,6 @@ namespace ApiRequestManager.Services
             return uri;
         }
 
-
         private string BuildAuthorizeUri(string redirectUri)
         {
 
@@ -166,6 +172,108 @@ namespace ApiRequestManager.Services
         }
 
 
+        public async Task<AccessTokenRequest> RequestLongLivedAccessTokenAsync(int apiId, string grantType)
+        {
+
+            //_requestRepository.GetApiByNameAsync("name");
+            //var httpResponse = await _client.GetAsync(BaseUrl);
+
+            //if (!httpResponse.IsSuccessStatusCode)
+            //{
+            //    throw new Exception("Cannot retrieve tasks");
+            //}
+
+            //var content = await httpResponse.Content.ReadAsStringAsync();
+            //var tasks = JsonConvert.DeserializeObject<List<Todo>>(content);
+
+            //return tasks;
+
+            return null;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="apiId"></param>
+        /// <param name="accessToken"></param>
+        /// <returns></returns>
+        public async Task<QueryMediaResponse> QueryUserMediaEdgeAsync(int apiId, int userId)
+        {
+            var requestUri = new StringBuilder();
+            //get the api
+            var api = await _requestRepository.GetApiByIdAsync(apiId);
+
+            if (string.IsNullOrEmpty(api.BaseUri)) throw new ArgumentException("Base uri cannot be null or empty.");
+
+            var baseUri = $"{api.BaseUri}?";
+
+            Client.BaseAddress = new Uri(baseUri);
+            //retreive request parameters for the api
+            var parameters = await _requestRepository.GetRequestParametersAsync(apiId, userId);
+
+
+            //iterate through the parameters to build the API request
+            foreach(var param in parameters)
+            {
+                //Check the parameter type
+                var segment = buildUriSegment(param);
+                requestUri.Append(segment);
+
+            }
+
+            //now, send request
+            var resultString = await sendGetAsync(requestUri.ToString());
+
+            return JsonConvert.DeserializeObject<QueryMediaResponse>(resultString);
+        }
+        public Task<QueryMediaResponse> QueryIgMediaNodeAsync(int apiId, string accessToken)
+        {
+            return null;
+        }
+
+
+        private static string buildUriSegment(RequestParameter requestParameter)
+        {
+            var requestUri = string.Empty;
+            var paramTypeStr = requestParameter.Type.TypeName;
+
+            var paramType = HelperService.GetValueFromDescription<RequestParamTypes>(paramTypeStr);
+
+            switch (paramType)
+            {
+                case RequestParamTypes.NameValuePair:
+                    requestUri += requestParameter.Name;
+                    requestUri += "=";
+                    var value = !string.IsNullOrEmpty(requestParameter.ParameterValue) ? requestParameter.ParameterValue : requestParameter.UserParameterValue;
+                    requestUri += value;
+                    requestUri += "&";
+                    break;
+                case RequestParamTypes.FileName:
+                    break;
+                case RequestParamTypes.Path:
+                    break;
+                default:
+                    break;
+            }
+
+            return requestUri;
+        }
+
+        private async Task<string> sendGetAsync(string uri)
+        {
+
+            if (Client.BaseAddress == null) return null;
+
+            var requestUrl = $"{Client.BaseAddress}{uri}";
+
+            var response = await Client.GetAsync(requestUrl).ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var resultString = await response.Content.ReadAsStringAsync();
+
+            return resultString;
+        }
 
 
     }

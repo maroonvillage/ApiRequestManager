@@ -20,6 +20,5 @@ namespace ApiRequestManager.Models
         [JsonProperty("code")]
         public string Code { get; set; }
 
-
     }
 }

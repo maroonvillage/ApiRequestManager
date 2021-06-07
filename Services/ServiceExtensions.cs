@@ -1,5 +1,6 @@
 using System.Net.Http;
 using ApiRequestManager.Interfaces;
+using ApiRequestManager.Repositories;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,8 +23,11 @@ namespace ApiRequestManager.Services
 
             });
 
+            services.AddTransient<IRequestRepository, RequestRepository>();
+
             services.AddHttpClient<IBasicIgApiService, BasicIgApiService>();
 
+            services.AddTransient<IRequestService, RequestService>();
 
             return services;
         }

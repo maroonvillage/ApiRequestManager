@@ -19,7 +19,6 @@ namespace ApiRequestManager.Models
     {
         [JsonProperty("id")]
         public string Id { get; set; }
-
         [JsonProperty("media_type")]
         public string MediaType { get; set; }
         [JsonProperty("media_url")]

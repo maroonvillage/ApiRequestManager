@@ -37,11 +37,11 @@ namespace ApiRequestManager
 
             services.RegisterServices();
 
-            _ = services.AddSingleton<IBasicIgApiService, BasicIgApiService>((dcx) =>
-            {
-                return new BasicIgApiService(new System.Net.Http.HttpClient(), Configuration);
+            //_ = services.AddSingleton<IBasicIgApiService, BasicIgApiService>((dcx) =>
+            //{
+            //    return new BasicIgApiService(new System.Net.Http.HttpClient(), Configuration);
 
-            });
+            //});
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
